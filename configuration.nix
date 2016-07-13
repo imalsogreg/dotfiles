@@ -13,11 +13,21 @@
   nix.trustedBinaryCaches = [ "https://nixcache.reflex-frp.org" ];
   nix.binaryCachePublicKeys = [ "ryantrinkle.com-1:JJiAKaRv9mWgpVAz8dwewnZe0AzzEAzPkagE9SP5NWI=" ];
 
+
   # Use the GRUB 2 boot loader.
   boot.loader.grub.enable = true;
   boot.loader.grub.version = 2;
   # Define on which hard drive you want to install Grub.
   boot.loader.grub.device = "/dev/sda";
+
+
+  boot.kernelPackages = pkgs.linuxPackages // {
+    virtualbox = pkgs.linuxPackages.virtualbox.override {
+      enableExtensionPack = true;
+      pulseSupport = true;
+    };
+  };
+  boot.extraModulePackages = [ pkgs.linuxPackages.lttng-modules];
 
   # networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -75,6 +85,19 @@
 
   # List services that you want to enable:
 
+  # Virtualbox && Docker
+
+  virtualisation.libvirtd.enable = true;
+  virtualisation.lxc.enable = true;
+  virtualisation.lxc.usernetConfig = ''
+    bfo veth lxcbr0 10
+  '';
+  virtualisation.docker.enable = true;
+  virtualisation.docker.storageDriver = "overlay";
+  
+  virtualisation.virtualbox.host.enable = true;
+  virtualisation.virtualbox.host.enableHardening = true;
+
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
 
@@ -120,6 +143,8 @@
     description = "Greg Hale";
     extraGroups = [ "wheel" "networkmanager" ];
   };
+
+  users.extraGroups.vboxusers.members = [ "greghale" ];
 
   # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "15.09";
