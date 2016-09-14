@@ -33,9 +33,9 @@
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Change mac address from the predefined one to get off of Wilson Lab VPN
-  networking.interfaces.enp7s0.macAddress = "00:1E:C9:65:6F:1C";
+  networking.interfaces.enp7s0.macAddress = "REDACTED";
   #networking.firewall.enable = false;
-  networking.firewall.allowedTCPPorts = [80 443 24800];
+  networking.firewall.allowedTCPPorts = [80 443 8080 24800];
   networking.extraHosts =
     ''
       18.93.13.1 tk1a
@@ -68,12 +68,13 @@
     gnupg
     traceroute
     xclip
-    xchat
     curl
     vim
     git
     haskellPackages.cabal2nix
     dmenu
+    haskellPackages.alex
+    haskellPackages.happy
     haskellPackages.xmobar
     haskellPackages.xmonad
     haskellPackages.xmonad-contrib
@@ -96,7 +97,7 @@
   virtualisation.docker.storageDriver = "overlay";
   
   virtualisation.virtualbox.host.enable = true;
-  virtualisation.virtualbox.host.enableHardening = true;
+  virtualisation.virtualbox.host.enableHardening = false;
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
@@ -147,6 +148,58 @@
   users.extraGroups.vboxusers.members = [ "greghale" ];
 
   # The NixOS release to be compatible with for stateful data such as databases.
-  system.stateVersion = "15.09";
+  system.stateVersion = "16.03";
+
+  # nginx and letsencrypt
+
+  # Fix simp_le (see https://github.com/NixOS/nixpkgs/issues/17455)
+  nixpkgs.config.packageOverrides = pkgs: rec {
+    simp_le = pkgs.simp_le.overrideDerivation (oldAttrs: {
+      patches = [
+      (pkgs.fetchpatch {
+        url = "https://github.com/kuba/simp_le/commit/4bc788fdd611c4118c3f86b5f546779723aca5a7.patch";
+        sha256 = "0036p11qn3plydv5s5z6i28r6ihy1ipjl0y8la0izpkiq273byfc";
+      })
+      ];
+    });
+  };
+
+  security.acme.certs."greghale.io" = {
+    webroot = "/var/www/challenges";
+    email = "imalsogreg@gmail.com";
+  }; 
+
+  services.nginx.enable=true;
+  services.nginx.httpConfig = ''
+    server {
+      server_name          greghale.io;
+      listen               80;
+      client_max_body_size 100M;
+
+      location /.well-known/acme-challenge {
+        root /var/www/challenges;
+      }
+
+      location / {
+        return 301 https://$host$request_uri;
+      }
+
+    }
+
+    server {
+      server_name greghale.io;
+      listen 443 ssl;
+      client_max_body_size 100M;
+
+      ssl_certificate     ${config.security.acme.directory}/greghale.io/fullchain.pem;
+      ssl_certificate_key ${config.security.acme.directory}/greghale.io/key.pem;
+
+
+      location / {
+        proxy_pass http://127.0.0.1:8000;
+      }
+
+    }
+  '';
 
 }
