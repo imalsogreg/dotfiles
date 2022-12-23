@@ -36,23 +36,31 @@
     ];
   };
 
-  services.xserver.synaptics.enable = true;
-
   # Configure keymap in X11
   services.xserver = {
+
     enable = true;
     autorun = true;
     layout = "us";
     xkbVariant = "dvorak";
     xkbOptions = "ctrl:nocaps";
-    displayManager.defaultSession = "none+xmonad";
-    displayManager.sddm.enable = true;
-    windowManager.xmonad = {
-      enable = true;
-      enableContribAndExtras = true;
-      extraPackages = hp: [ hp.xmobar hp.yeganesh hp.xmonad-contrib hp.xmonad-extras ];
-    };
+
+    # synaptics.enable = true;
+    # displayManager.defaultSession = "none+xmonad";
+    # displayManager.sddm.enable = true;
+    # windowManager.xmonad = {
+    #   enable = true;
+    #   enableContribAndExtras = true;
+    #   extraPackages = hp: [ hp.xmobar hp.yeganesh hp.xmonad-contrib hp.xmonad-extras ];
+    # };
+
+    displayManager.gdm.enable = true;
+    displayManager.gdm.wayland = false;
+    desktopManager.gnome3.enable = true;
   };
+
+  # services.dbus.packages = [ pkgs.gnome3.dconf ];
+  services.udev.packages = [ pkgs.gnome3.gnome-settings-daemon ];
 
   # Configure console keymap
   console.keyMap = "dvorak";
@@ -95,10 +103,15 @@
 
    direnv
    nix-direnv
+
+   gnomeExtensions.system-monitor-2
   ];
 
-  nix.binaryCaches = [ "https://cache.nixos.org" "https://nixcache.reflex-frp.org" ];
-  nix.binaryCachePublicKeys = [ "ryantrinkle.com-1:JJiAKaRv9mWgpVAz8dwewnZe0AzzEAzPkagE9SP5NWI=" ];
+  nix.binaryCaches = [ "https://cache.nixos.org" "https://nixcache.reflex-frp.org" "https://cache.iog.io" ];
+  nix.binaryCachePublicKeys = [
+    "ryantrinkle.com-1:JJiAKaRv9mWgpVAz8dwewnZe0AzzEAzPkagE9SP5NWI="
+    "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
+  ];
   nix.trustedUsers = [ "greghale" ];
   nix.extraOptions = ''
     experimental-features = nix-command flakes
@@ -128,6 +141,8 @@
   services.kbfs.enable = true;
   services.lorri.enable = true;
   services.tailscale.enable = true;
+  services.mysql.enable = true;
+  services.mysql.package = pkgs.mysql;
 
   sound.enable = true;
   hardware.pulseaudio = {
@@ -141,6 +156,8 @@
   hardware.opengl.enable = true;
 
   virtualisation.docker.enable = true;
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = [ "greghale" ];
 
   # Open ports in the firewall.
   networking.firewall.allowedTCPPorts = [ 22 80 443 1790 3000 8000 8080 24800 26275 ];
