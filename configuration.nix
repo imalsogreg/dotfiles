@@ -104,7 +104,17 @@
    direnv
    nix-direnv
 
+   gnomeExtensions.appindicator
+   gnomeExtensions.paperwm
+   gnomeExtensions.system-monitor
    gnomeExtensions.system-monitor-2
+
+   gnugo
+   kigo
+
+   gnuchess
+   gnome.gnome-chess
+
   ];
 
   nix.binaryCaches = [ "https://cache.nixos.org" "https://nixcache.reflex-frp.org" "https://cache.iog.io" ];
