@@ -93,7 +93,6 @@
    wget
    ripgrep
    termite
-   xmobar
    dmenu
 
    firefox
